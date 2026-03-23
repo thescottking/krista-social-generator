@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Krista Social Content Generator</title>
+<style>
+  :root {
+    --k-cyan: #4FD7ED; --k-dark: #3F3920; --k-amber: #F6AF1E;
+    --k-cyan-bg: #edfafd; --k-cyan-text: #0a6f7e;
+    --k-amber-bg: #fff8e6; --k-amber-text: #7a4f00;
+    --bg: #f5f4f0; --surface: #ffffff; --border: rgba(0,0,0,0.1);
+    --text: #1a1a1a; --text-sec: #555; --text-ter: #888;
+    --radius-md: 8px; --radius-lg: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--text); min-height: 100vh; padding: 2rem 1rem; }
+  .page { max-width: 1100px; margin: 0 auto; }
+  .top-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; }
+  .k-mark { display: flex; gap: 4px; align-items: center; }
+  .k-dot { border-radius: 50%; }
+  .top-bar h1 { font-size: 20px; font-weight: 600; color: var(--text); }
+  .top-bar p { font-size: 13px; color: var(--text-sec); }
+  .api-bar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .api-bar label { font-size: 13px; color: var(--text-sec); white-space: nowrap; }
+  .api-bar input { flex: 1; min-width: 280px; font-size: 13px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg); font-family: monospace; }
+  .api-status { font-size: 12px; padding: 3px 10px; border-radius: 999px; }
+  .api-status.ok { background: #e8f5e9; color: #2e7d32; }
+  .api-status.err { background: #ffeaea; color: #c62828; }
+  .grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 1.5rem; }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; }
+  .sec-label { font-size: 11px; font-weight: 600; color: var(--text-ter); letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 14px; }
+  label { font-size: 13px; color: var(--text-sec); display: block; margin-bottom: 4px; margin-top: 12px; }
+  label:first-of-type { margin-top: 0; }
+  textarea, input[type=text], input[type=password] { width: 100%; font-size: 13px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg); color: var(--text); font-family: inherit; }
+  textarea { resize: vertical; min-height: 68px; }
+  textarea:focus, input:focus { outline: none; border-color: var(--k-cyan); }
+  .chip-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .chip { padding: 5px 11px; font-size: 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--bg); color: var(--text-sec); cursor: pointer; transition: all 0.12s; user-select: none; }
+  .chip.on-dark { background: #f5f3ee; color: var(--k-dark); border-color: var(--k-dark); }
+  .chip.on-cyan { background: var(--k-cyan-bg); color: var(--k-cyan-text); border-color: var(--k-cyan); }
+  .plat-row { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+  .c-pill { padding: 5px 12px; font-size: 12px; font-weight: 600; border: 1px solid var(--border); border-radius: 999px; background: var(--bg); color: var(--text-sec); cursor: pointer; transition: all 0.12s; user-select: none; }
+  .c-pill.on-li { background: #eef0ff; color: #2a26b0; border-color: #3F39FF; }
+  .c-pill.on-tw { background: var(--k-cyan-bg); color: var(--k-cyan-text); border-color: var(--k-cyan); }
+  .c-pill.on-ig { background: var(--k-amber-bg); color: var(--k-amber-text); border-color: var(--k-amber); }
+  .gen-btn { width: 100%; margin-top: 16px; padding: 11px; font-size: 14px; font-weight: 600; border-radius: var(--radius-md); background: var(--k-cyan); color: var(--k-dark); border: none; cursor: pointer; transition: opacity 0.15s; }
+  .gen-btn:hover { opacity: 0.88; }
+  .gen-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .fetch-row { display: flex; gap: 8px; margin-top: 4px; }
+  .fetch-row input { flex: 1; }
+  .fetch-btn { padding: 0 16px; font-size: 12px; font-weight: 600; border-radius: var(--radius-md); background: var(--k-dark); color: #fff; border: none; cursor: pointer; white-space: nowrap; transition: opacity 0.15s; }
+  .fetch-btn:hover { opacity: 0.85; }
+  .fetch-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .article-preview { margin-top: 8px; background: var(--bg); border-radius: var(--radius-md); padding: 10px 12px; border-left: 3px solid var(--k-cyan); }
+  .article-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .article-summary { font-size: 12px; color: var(--text-sec); line-height: 1.6; }
+  .article-stats { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .stat-pill { font-size: 11px; background: var(--k-amber-bg); color: var(--k-amber-text); border: 1px solid var(--k-amber); border-radius: 999px; padding: 2px 8px; font-weight: 600; }
+  .empty { text-align: center; padding: 3rem 1rem; color: var(--text-ter); font-size: 13px; line-height: 1.8; }
+  .result-plat { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 999px; margin-bottom: 8px; }
+  .result-plat.li { background: #eef0ff; color: #2a26b0; }
+  .result-plat.tw { background: var(--k-cyan-bg); color: var(--k-cyan-text); }
+  .result-plat.ig { background: var(--k-amber-bg); color: var(--k-amber-text); }
+  .r-label { font-size: 11px; color: var(--text-ter); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
+  .r-box { font-size: 13px; color: var(--text); background: var(--bg); border-radius: var(--radius-md); padding: 10px 12px; line-height: 1.6; white-space: pre-wrap; border: 1px solid var(--border); }
+  .r-block { margin-bottom: 12px; }
+  .copy-btn { font-size: 11px; color: var(--k-cyan-text); background: none; border: none; cursor: pointer; padding: 3px 0 0; display: block; font-family: inherit; }
+  .copy-btn:hover { opacity: 0.7; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  .spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid rgba(63,57,32,0.2); border-top-color: var(--k-dark); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .img-prompt-box { background: #1a1a1a; border-radius: var(--radius-md); padding: 10px 12px; font-size: 12px; line-height: 1.7; color: #e0e0e0; white-space: pre-wrap; font-family: 'Courier New', monospace; border: 1px solid #333; }
+  .pmeta-pill { font-size: 10px; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+  .pmeta-mj { background: #2d1f3d; color: #c9a8f5; }
+  .pmeta-de { background: #1f2d3d; color: #8abff5; }
+  .prompt-meta { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+  .msg-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .msg-chip { padding: 5px 10px; font-size: 11px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg); color: var(--text-sec); cursor: pointer; user-select: none; transition: all 0.12s; }
+  .msg-chip.on { background: #f5f3ee; color: var(--k-dark); border-color: var(--k-dark); }
+  .bg-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 4px; }
+  .bg-swatch { border-radius: var(--radius-md); border: 2px solid transparent; cursor: pointer; overflow: hidden; aspect-ratio: 4/3; display: flex; flex-direction: column; justify-content: flex-end; padding: 5px; transition: border-color 0.15s; }
+  .bg-swatch.sel { border-color: var(--k-cyan); }
+  .bg-swatch .sw-label { font-size: 9px; font-weight: 700; text-transform: uppercase; line-height: 1; }
+  .bg-swatch .sw-sub { font-size: 8px; opacity: 0.75; margin-top: 1px; }
+  .source-tabs { display: flex; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; margin-bottom: 14px; }
+  .source-tab { flex: 1; padding: 8px; font-size: 12px; font-weight: 600; text-align: center; cursor: pointer; color: var(--text-sec); background: var(--bg); border: none; border-right: 1px solid var(--border); font-family: inherit; transition: all 0.12s; }
+  .source-tab:last-child { border-right: none; }
+  .source-tab.on { background: var(--k-cyan-bg); color: var(--k-cyan-text); }
+  .source-panel { display: none; }
+  .source-panel.on { display: block; }
+  .fetch-status { font-size: 12px; color: var(--text-ter); margin-top: 6px; min-height: 18px; }
+  footer { text-align: center; margin-top: 2.5rem; font-size: 12px; color: var(--text-ter); }
+  footer a { color: var(--k-cyan-text); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="top-bar">
+    <div class="k-mark">
+      <div class="k-dot" style="width:11px;height:11px;background:var(--k-cyan);"></div>
+      <div class="k-dot" style="width:8px;height:8px;background:var(--k-amber);"></div>
+      <div class="k-dot" style="width:6px;height:6px;background:var(--k-dark);"></div>
+    </div>
+    <div>
+      <h1>Krista Social Content Generator</h1>
+      <p>On-brand captions · overlays · sketch-style image prompts for Midjourney &amp; DALL-E</p>
+    </div>
+  </div>
+
+  <div class="api-bar">
+    <label for="api-key">Anthropic API key</label>
+    <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off" oninput="checkKey()" />
+    <span class="api-status err" id="api-status">No key</span>
+    <span style="font-size:11px;color:var(--text-ter);">Key stays in your browser only — never sent anywhere except Anthropic.</span>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <p class="sec-label">Content source</p>
+
+      <div class="source-tabs">
+        <button class="source-tab on" data-tab="url" onclick="switchTab('url')">Article URL</button>
+        <button class="source-tab" data-tab="manual" onclick="switchTab('manual')">Write brief</button>
+      </div>
+
+      <div class="source-panel on" id="panel-url">
+        <label style="margin-top:0;">Paste a Krista article URL</label>
+        <div class="fetch-row">
+          <input type="text" id="article-url" placeholder="https://krista.ai/..." onkeydown="if(event.key==='Enter')fetchArticle()" />
+          <button class="fetch-btn" id="fetch-btn" onclick="fetchArticle()">Fetch</button>
+        </div>
+        <div id="article-preview" style="display:none;" class="article-preview"></div>
+        <div class="fetch-status" id="fetch-status"></div>
+      </div>
+
+      <div class="source-panel" id="panel-manual">
+        <label style="margin-top:0;">What's this post about?</label>
+        <textarea id="topic-manual" placeholder="e.g. How Krista eliminates agent sprawl for enterprise IT teams..."></textarea>
+        <label>Target audience</label>
+        <input type="text" id="audience-manual" placeholder="e.g. CIOs, enterprise architects, IT ops leaders..." />
+      </div>
+
+      <label>Messaging angle (3 Cs)</label>
+      <div class="msg-row" id="msg-row">
+        <span class="msg-chip on" data-msg="Complete">Complete</span>
+        <span class="msg-chip" data-msg="Cognitive">Cognitive</span>
+        <span class="msg-chip" data-msg="Careful">Careful</span>
+      </div>
+
+      <label>Tone</label>
+      <div class="chip-row" id="tone-row">
+        <span class="chip on-dark" data-tone="authoritative">Authoritative</span>
+        <span class="chip" data-tone="visionary">Visionary</span>
+        <span class="chip" data-tone="pragmatic">Pragmatic</span>
+        <span class="chip" data-tone="bold">Bold</span>
+      </div>
+
+      <label>Platforms</label>
+      <div class="plat-row" id="plat-row">
+        <span class="c-pill on-li" data-plat="linkedin">LinkedIn</span>
+        <span class="c-pill on-tw" data-plat="twitter">X / Twitter</span>
+        <span class="c-pill on-ig" data-plat="instagram">Instagram</span>
+      </div>
+
+      <label>Image background</label>
+      <div class="bg-grid" id="bg-grid">
+        <div class="bg-swatch sel" data-bg="black" style="background:#111;"><span class="sw-label" style="color:#4FD7ED;">Black</span><span class="sw-sub" style="color:#4FD7ED;">Classic Krista</span></div>
+        <div class="bg-swatch" data-bg="white" style="background:#fff;border-color:#ddd;"><span class="sw-label" style="color:#3F3920;">White</span><span class="sw-sub" style="color:#3F3920;">Editorial</span></div>
+        <div class="bg-swatch" data-bg="navy" style="background:#0d1b2e;"><span class="sw-label" style="color:#4FD7ED;">Navy</span><span class="sw-sub" style="color:#4FD7ED;">Enterprise</span></div>
+        <div class="bg-swatch" data-bg="tan" style="background:#D8CEC5;"><span class="sw-label" style="color:#3F3920;">Tan</span><span class="sw-sub" style="color:#3F3920;">Warm</span></div>
+        <div class="bg-swatch" data-bg="cyan" style="background:#4FD7ED;"><span class="sw-label" style="color:#3F3920;">Cyan</span><span class="sw-sub" style="color:#3F3920;">Brand bold</span></div>
+        <div class="bg-swatch" data-bg="olive" style="background:#3F3920;"><span class="sw-label" style="color:#F6AF1E;">Olive</span><span class="sw-sub" style="color:#F6AF1E;">Warm dark</span></div>
+        <div class="bg-swatch" data-bg="light-gray" style="background:#f2f0eb;"><span class="sw-label" style="color:#3F3920;">Light gray</span><span class="sw-sub" style="color:#3F3920;">Minimal</span></div>
+        <div class="bg-swatch" data-bg="teal-dark" style="background:#0a3d3f;"><span class="sw-label" style="color:#4FD7ED;">Dark teal</span><span class="sw-sub" style="color:#4FD7ED;">Moody</span></div>
+      </div>
+
+      <label>Sketch subject</label>
+      <div class="chip-row" id="subj-row">
+        <span class="chip on-cyan" data-subj="systems & integrations">Systems</span>
+        <span class="chip" data-subj="workflow & automation">Workflow</span>
+        <span class="chip" data-subj="data & analytics">Data</span>
+        <span class="chip" data-subj="enterprise operations">Operations</span>
+        <span class="chip" data-subj="AI & cognition">AI / Cognition</span>
+      </div>
+
+      <label>Call to action (optional)</label>
+      <input type="text" id="cta" placeholder="e.g. Book a demo, Read the full article..." />
+
+      <button class="gen-btn" id="gen-btn" onclick="generate()">Generate content + image prompt</button>
+    </div>
+
+    <div class="card" style="min-height:300px;">
+      <p class="sec-label">Generated content</p>
+      <div id="results">
+        <div class="empty">
+          Enter your Anthropic API key above, then paste an article URL or write your brief.<br/><br/>
+          You'll get platform captions, text overlays, and Midjourney/DALL-E sketch prompts — all in Krista's brand style.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Krista Social Content Generator &nbsp;·&nbsp; Powered by <a href="https://krista.ai" target="_blank">Krista AI</a> &amp; Claude
+  </footer>
+</div>
+
+<script>
+  let selTones=['authoritative'], selPlats=['linkedin','twitter','instagram'], selMsgs=['Complete'], selSubj='systems & integrations', selBg='black', activeTab='url', articleData=null;
+
+  function checkKey() {
+    const k=document.getElementById('api-key').value.trim();
+    const s=document.getElementById('api-status');
+    if(k.startsWith('sk-ant-')&&k.length>20){s.textContent='Ready';s.className='api-status ok';}
+    else{s.textContent='No key';s.className='api-status err';}
+  }
+
+  function getKey(){return document.getElementById('api-key').value.trim();}
+
+  function switchTab(tab){
+    activeTab=tab;
+    document.querySelectorAll('.source-tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===tab));
+    document.querySelectorAll('.source-panel').forEach(p=>p.classList.toggle('on',p.id==='panel-'+tab));
+  }
+
+  document.querySelectorAll('#tone-row .chip').forEach(c=>{c.onclick=()=>{c.classList.toggle('on-dark');const t=c.dataset.tone;selTones=selTones.includes(t)?selTones.filter(x=>x!==t):[...selTones,t];};});
+  document.querySelectorAll('#plat-row .c-pill').forEach(b=>{const cls={linkedin:'on-li',twitter:'on-tw',instagram:'on-ig'};b.onclick=()=>{b.classList.toggle(cls[b.dataset.plat]);const p=b.dataset.plat;selPlats=selPlats.includes(p)?selPlats.filter(x=>x!==p):[...selPlats,p];};});
+  document.querySelectorAll('#msg-row .msg-chip').forEach(c=>{c.onclick=()=>{c.classList.toggle('on');const m=c.dataset.msg;selMsgs=selMsgs.includes(m)?selMsgs.filter(x=>x!==m):[...selMsgs,m];};});
+  document.querySelectorAll('#subj-row .chip').forEach(c=>{c.onclick=()=>{document.querySelectorAll('#subj-row .chip').forEach(x=>x.classList.remove('on-cyan'));c.classList.add('on-cyan');selSubj=c.dataset.subj;};});
+  document.querySelectorAll('#bg-grid .bg-swatch').forEach(b=>{b.onclick=()=>{document.querySelectorAll('#bg-grid .bg-swatch').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');selBg=b.dataset.bg;};});
+
+  function copy(id){const el=document.getElementById(id);if(!el)return;navigator.clipboard.writeText(el.innerText).catch(()=>{});const btn=document.getElementById('cp-'+id);if(btn){btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1500);}}
+
+  const BG_SPECS={'black':{desc:'pure black (#111)',lineColors:'cyan (#4FD7ED) and amber (#F6AF1E)',textColor:'white headline, amber accents',mood:'bold, premium enterprise'},'white':{desc:'clean white (#FFF)',lineColors:'dark charcoal (#3F3920) with cyan accents',textColor:'charcoal headline, cyan accents',mood:'clean, editorial'},'navy':{desc:'deep navy (#0D1B2E)',lineColors:'cyan (#4FD7ED) and amber (#F6AF1E)',textColor:'white headline, cyan accents',mood:'trustworthy, authoritative'},'tan':{desc:'warm tan (#D8CEC5)',lineColors:'dark olive (#3F3920) and cyan',textColor:'olive headline, cyan accents',mood:'warm, approachable'},'cyan':{desc:'Krista cyan (#4FD7ED)',lineColors:'dark charcoal (#3F3920) and white',textColor:'charcoal headline, white body',mood:'energetic, branded'},'olive':{desc:'olive-brown (#3F3920)',lineColors:'cyan (#4FD7ED) and amber (#F6AF1E)',textColor:'white headline, amber accents',mood:'sophisticated, warm dark'},'light-gray':{desc:'light gray (#F2F0EB)',lineColors:'charcoal (#3F3920) with cyan accents',textColor:'charcoal headline, cyan accents',mood:'minimal, neutral'},'teal-dark':{desc:'dark teal (#0A3D3F)',lineColors:'cyan (#4FD7ED) and amber (#F6AF1E)',textColor:'white headline, cyan accents',mood:'moody, tech-forward'}};
+  const MSG_CONTEXT={Complete:"Krista is COMPLETE: orchestrates end-to-end business processes across people, systems, and AI. Long-running stateful workflows. Native human-in-the-loop routing. Eliminates agent sprawl.",Cognitive:"Krista is COGNITIVE: unified enterprise brain — all agents share memory. Native ML on proprietary data. Dynamic model routing. 'GenAI generates text. Krista generates outcomes.'",Careful:"Krista is CAREFUL: Zero-Trust architecture. Draft→Test→Live lifecycle. Confidence scoring. Hallucination prevention. Hybrid cloud for GDPR/HIPAA."};
+
+  async function fetchArticle(){
+    const url=document.getElementById('article-url').value.trim();
+    if(!url)return;
+    const key=getKey();
+    if(!key){document.getElementById('fetch-status').textContent='Add your API key first.';return;}
+    const btn=document.getElementById('fetch-btn'),status=document.getElementById('fetch-status'),preview=document.getElementById('article-preview');
+    btn.disabled=true;btn.innerHTML='<span class="spinner" style="border-top-color:#fff;"></span>';
+    status.textContent='Reading article...';preview.style.display='none';articleData=null;
+    try{
+      const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,tools:[{type:'web_search_20250305',name:'web_search'}],system:'You are a content analyst. Fetch and analyze the given URL. Return ONLY valid JSON, no markdown. Shape: {"title":"...","summary":"...","key_stats":["..."],"main_message":"...","audience":"...","topic":"..."}. key_stats: up to 4 concrete numbers/stats. main_message: core argument in one sentence.',messages:[{role:'user',content:`Fetch and analyze this article: ${url}`}]})});
+      const data=await resp.json();
+      const raw=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+      const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+      articleData={...parsed,url};
+      preview.innerHTML=`<div class="article-title">${parsed.title||'Article loaded'}</div><div class="article-summary">${parsed.main_message||''}</div>${parsed.key_stats&&parsed.key_stats.length?`<div class="article-stats">${parsed.key_stats.map(s=>`<span class="stat-pill">${s}</span>`).join('')}</div>`:''}`;
+      preview.style.display='block';status.textContent='';
+    }catch(e){status.textContent='Could not read article. Try "Write brief" tab instead.';status.style.color='#c62828';}
+    finally{btn.disabled=false;btn.textContent='Fetch';}
+  }
+
+  async function generate(){
+    if(activeTab==='url'&&!articleData){alert('Please fetch an article URL first, or switch to "Write brief".');return;}
+    if(activeTab==='manual'&&!document.getElementById('topic-manual').value.trim()){alert('Please describe what the post is about.');return;}
+    if(selPlats.length===0){alert('Select at least one platform.');return;}
+    const key=getKey();
+    if(!key){alert('Please enter your Anthropic API key at the top.');return;}
+    const bg=BG_SPECS[selBg],tone=selTones.join(', ')||'authoritative',msgContext=selMsgs.map(m=>MSG_CONTEXT[m]).join('\n'),cta=document.getElementById('cta').value.trim();
+    let topicBlock=activeTab==='url'&&articleData?`Article title: ${articleData.title}\nTopic: ${articleData.topic}\nCore message: ${articleData.main_message}\nKey stats: ${(articleData.key_stats||[]).join(', ')}\nAudience: ${articleData.audience||'enterprise leaders'}\nURL: ${articleData.url}`:`Topic: ${document.getElementById('topic-manual').value.trim()}\nAudience: ${document.getElementById('audience-manual').value.trim()}`;
+    const btn=document.getElementById('gen-btn');
+    btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Generating...';
+    document.getElementById('results').innerHTML='<div class="empty"><span class="spinner"></span> Writing your Krista content...</div>';
+    const platInstr=selPlats.map(p=>{if(p==='linkedin')return'LinkedIn: 3-5 sentences. Lead with stat or bold provocation. Include article URL if available. 3-4 hashtags. Max 600 chars.';if(p==='twitter')return'X/Twitter: under 280 chars. One sharp stat or insight. 1-2 hashtags. Punchy.';if(p==='instagram')return'Instagram: hook first line, 2-3 value sentences, CTA, 6-8 hashtags. Max 400 chars.';return'';}).join('\n');
+    const systemPrompt=`You are Krista Software's senior content strategist. Enterprise Agentic Platform — "Orchestrating your people, systems, and AI." Confident, precise, no buzzword soup. Return ONLY valid JSON, no markdown fences. Shape: {"platforms":{"linkedin":{"caption":"...","overlay":"..."},"twitter":{"caption":"..."},"instagram":{"caption":"...","overlay":"..."}},"image_prompt":{"midjourney":"...","dalle":"...","overlay_text":"..."}} Only include platform keys requested. overlay=bold 3-7 word graphic text (skip twitter). overlay_text=punchy 4-8 word graphic headline.`;
+    const userMsg=`Create Krista social content.\n${topicBlock}\nTone: ${tone}\nMessaging: ${selMsgs.join(', ')}\n${cta?'CTA: '+cta:''}\nPlatforms: ${selPlats.join(', ')}\n\nMessaging context:\n${msgContext}\n\nPlatform requirements:\n${platInstr}\n\nImage prompt — Krista sketch style:\nBackground: ${bg.desc}\nLines: ${bg.lineColors}\nText: ${bg.textColor}\nMood: ${bg.mood}\nStyle: hand-drawn technical blueprint sketch, thin pen lines, NO fills — outlines only, interconnected enterprise diagram showing ${selSubj}, whiteboard marker style, isometric icons, arrows, nodes, lines bleed off lower-right edge, no photorealism.\nMIDJOURNEY: detailed /imagine prompt. End with: --ar 1:1 --style raw --stylize 450 --no photography, gradients, fills, text, watermark\nDALLE: same concept for DALL-E 3. Flat technical illustration, hand-drawn sketch lines.\noverlay_text: short punchy 4-8 word headline tied to the core insight.`;
+    try{
+      const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,system:systemPrompt,messages:[{role:'user',content:userMsg}]})});
+      const data=await resp.json();
+      const raw=data.content.map(b=>b.text||'').join('');
+      renderResults(JSON.parse(raw.replace(/```json|```/g,'').trim()));
+    }catch(e){document.getElementById('results').innerHTML='<div class="empty" style="color:#c62828">Something went wrong. Check your API key and try again.</div>';}
+    finally{btn.disabled=false;btn.textContent='Generate content + image prompt';}
+  }
+
+  function renderResults(data){
+    const platMeta={linkedin:{label:'LinkedIn',cls:'li',hasOverlay:true},twitter:{label:'X / Twitter',cls:'tw',hasOverlay:false},instagram:{label:'Instagram',cls:'ig',hasOverlay:true}};
+    const bgPrev={'black':'#111','white':'#fff','navy':'#0d1b2e','tan':'#D8CEC5','cyan':'#4FD7ED','olive':'#3F3920','light-gray':'#f2f0eb','teal-dark':'#0a3d3f'}[selBg]||'#111';
+    const txtPrev={'black':'#fff','white':'#3F3920','navy':'#fff','tan':'#3F3920','cyan':'#3F3920','olive':'#fff','light-gray':'#3F3920','teal-dark':'#fff'}[selBg]||'#fff';
+    let html='',first=true;
+    selPlats.forEach(p=>{
+      const pd=data.platforms&&data.platforms[p];if(!pd)return;
+      if(!first)html+='<div class="divider"></div>';first=false;
+      const meta=platMeta[p];
+      html+=`<span class="result-plat ${meta.cls}">${meta.label}</span>`;
+      if(meta.hasOverlay&&pd.overlay)html+=`<div class="r-block"><div class="r-label">Text overlay</div><div class="r-box" id="ov-${p}">${pd.overlay}</div><button class="copy-btn" id="cp-ov-${p}" onclick="copy('ov-${p}')">Copy</button></div>`;
+      html+=`<div class="r-block"><div class="r-label">Caption</div><div class="r-box" id="cap-${p}">${pd.caption}</div><button class="copy-btn" id="cp-cap-${p}" onclick="copy('cap-${p}')">Copy</button></div>`;
+    });
+    if(data.image_prompt){
+      const ip=data.image_prompt;
+      html+='<div class="divider"></div>';
+      if(ip.overlay_text)html+=`<div class="r-block"><div class="r-label">Graphic headline</div><div style="background:${bgPrev};border-radius:8px;padding:14px 16px;font-size:16px;font-weight:600;color:${txtPrev};line-height:1.4;">${ip.overlay_text}</div><button class="copy-btn" onclick="navigator.clipboard.writeText('${ip.overlay_text.replace(/'/g,"\\'")}')">Copy</button></div>`;
+      if(ip.midjourney)html+=`<div class="r-block"><div class="prompt-meta"><span class="pmeta-pill pmeta-mj">Midjourney</span><span style="font-size:11px;color:#888;">Paste into /imagine</span></div><div class="img-prompt-box" id="mjp">${ip.midjourney}</div><button class="copy-btn" id="cp-mjp" onclick="copy('mjp')" style="color:#c9a8f5">Copy prompt</button></div>`;
+      if(ip.dalle)html+=`<div class="r-block"><div class="prompt-meta"><span class="pmeta-pill pmeta-de">DALL-E 3</span></div><div class="img-prompt-box" id="dep">${ip.dalle}</div><button class="copy-btn" id="cp-dep" onclick="copy('dep')" style="color:#8abff5">Copy prompt</button></div>`;
+    }
+    document.getElementById('results').innerHTML=html;
+  }
+</script>
+</body>
+</html>
